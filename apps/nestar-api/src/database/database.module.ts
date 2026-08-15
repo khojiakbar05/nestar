@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 
-console.log('MONGO_DEV:', process.env.MONGO_DEV);
-console.log('MONGO_PROD:', process.env.MONGO_PROD);
+// console.log('MONGO_DEV:', process.env.MONGO_DEV);
+// console.log('MONGO_PROD:', process.env.MONGO_PROD);
 
 @Module({
 	imports: [

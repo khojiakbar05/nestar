@@ -115,7 +115,7 @@ const MemberSchema = new Schema(
 			type: Date,
 		},
 	},
-	{ timeStamps: true, collection: 'members' },
+	{ timestamps: true, collection: 'members' },
 );
 
 

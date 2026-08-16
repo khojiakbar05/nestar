@@ -20,6 +20,10 @@ export class MemberService {
 		try {
 			const result = await this.memberModel.create(input);
 			// TODO Authentication via TOKEN
+			result.accessToken = await this.authService.createToken(result);
+			// console.log('accessToken: ', accessToken);
+			
+
 			return result;
 		} catch (err: any) {
 			console.log('Error, Service.model: ', err.message);
@@ -31,7 +35,7 @@ export class MemberService {
 		const { memberNick, memberPassword } = input;
 		const response = await this.memberModel
 			.findOne({ memberNick: memberNick })
-			.select('+memberPassword') //passwordni majburan olish
+			.select('+memberPassword') // forced taking password
 			.exec();
 
 		if (!response || response.memberStatus === MemberStatus.DELETE) {
@@ -45,6 +49,7 @@ export class MemberService {
 
 		const isMatch = await this.authService.comparePasswords(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		response.accessToken = await this.authService.createToken(response);
 
 		return response;
 	}

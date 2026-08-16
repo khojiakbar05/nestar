@@ -7,6 +7,7 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
 import { ComponentsModule } from './components/components.module';
 import { DatabaseModule } from './database/database.module';
+import { T } from './libs/types/common';
 
 @Module({
 	imports: [
@@ -16,9 +17,18 @@ import { DatabaseModule } from './database/database.module';
 			playground: true,
 			uploads: false,
 			autoSchemaFile: true,
+			formatError: (error: T) => {    // changing global errors to CUSTOMIZED errors and we can send it to frontend
+				const graphQLFormattedError = {
+					code: error?.extensions.code,
+					message:
+						error?.extensions?.exception?.response?.message || error?.extenions?.response?.message || error?.message,
+				};
+				console.log('GRAPHQL GLOBAL ERROR: ', graphQLFormattedError);
+				return graphQLFormattedError;
+			},
 		}),
 		ComponentsModule, // HTTP
-		DatabaseModule,   // TCP 
+		DatabaseModule, // TCP
 	],
 	controllers: [AppController],
 	providers: [AppService, AppResolver],

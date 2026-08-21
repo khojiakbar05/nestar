@@ -4,6 +4,9 @@ import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enu
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Member {
+	memberNick(arg0: string, memberNick: any) {
+		throw new Error('Method not implemented.');
+	}
 	@Field(() => String)
 	_id!: mongoose.ObjectId;
 

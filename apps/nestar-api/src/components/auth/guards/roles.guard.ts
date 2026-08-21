@@ -1,14 +1,24 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthService } from '../auth.service';
 import { Message } from '../../../libs/enums/common.enum';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
-	constructor(private authService: AuthService) {}
+export class RolesGuard implements CanActivate {
+	constructor(
+		private reflector: Reflector,
+		private authService: AuthService,
+	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.info('--- @guard() Authentication [AuthGuard] ---');
+		// Decorator orqali berilgan rollarni oladi
+		const roles = this.reflector.get<string[]>('roles', context.getHandler());
+
+		// Agar @Roles() yo'q bo'lsa, ruxsat beriladi
+		if (!roles) return true;
+
+		console.info(`--- @guard() Authentication [RolesGuard]: ${roles} ---`);
 
 		let request;
 
@@ -28,15 +38,13 @@ export class AuthGuard implements CanActivate {
 		const token = bearerToken.split(' ')[1];
 		const authMember = await this.authService.verifyToken(token);
 
-		if (!authMember) {
-			throw new UnauthorizedException(Message.NOT_AUTHENTICATED);
+		const hasPermission = roles.includes(authMember.memberType);
+
+		if (!authMember || !hasPermission) {
+			throw new ForbiddenException(Message.ONLY_SPECIFIC_ROLES_ALLOWED);
 		}
 
-		console.log('memberNick[auth] =>', authMember.memberNick);
-
 		request.body.authMember = authMember;
-		
-		// description => http, rpc, gprs and etc are ignored
 
 		return true;
 	}

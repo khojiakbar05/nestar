@@ -16,13 +16,12 @@ export class MemberService {
 
 	public async signup(input: MemberInput): Promise<Member> {
 		// TODO Hash password
-		input.memberPassword = await this.authService.hashPassword(input.memberPassword)
+		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		try {
 			const result = await this.memberModel.create(input);
 			// TODO Authentication via TOKEN
 			result.accessToken = await this.authService.createToken(result);
 			// console.log('accessToken: ', accessToken);
-			
 
 			return result;
 		} catch (err: any) {
@@ -62,5 +61,15 @@ export class MemberService {
 	public async getMember(): Promise<string> {
 		console.log('Mutation: getMember');
 		return 'getMember executed!';
+	}
+
+	public async getAllMembersByAdmin(): Promise<string> {
+		console.log('Mutation: getAllMembersByAdmin');
+		return 'getAllMembersByAdmin executed!';
+	}
+
+	public async updateMemberByAdmin(): Promise<string> {
+		console.log('Mutation: updateMemberByAdmin');
+		return 'updateMemberByAdmin executed!';
 	}
 }

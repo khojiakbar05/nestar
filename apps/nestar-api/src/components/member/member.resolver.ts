@@ -10,31 +10,42 @@ export class MemberResolver {
 
 	@Mutation(() => Member)
 	public async signup(@Args('input') input: MemberInput): Promise<Member> {
-			console.log('Mutation: signup');
-			// console.log('input: ', input);
-			return this.memberService.signup(input);
+		console.log('Mutation: signup');
+		// console.log('input: ', input);
+		return await this.memberService.signup(input);
 	}
 
 	@Mutation(() => Member)
 	public async login(@Args('input') input: LoginInput): Promise<Member> {
 		console.log('Mutation: login');
-		return this.memberService.login(input);
+		return await this.memberService.login(input);
 	}
 
+	// Authenticated
 	@Mutation(() => String)
 	public async updateMember(): Promise<string> {
-		try {
-			console.log('Mutation: updateMember');
-			return this.memberService.updateMember();
-		} catch (err) {
-			console.log('Error, login: ', err);
-			throw new InternalServerErrorException();
-		}
+		console.log('Mutation: updateMember');
+		return this.memberService.updateMember();
 	}
 
 	@Query(() => String)
 	public async getMember(): Promise<string> {
 		console.log('Mutation: getMember');
 		return this.memberService.getMember();
+	}
+
+	/** ADMIN **/
+
+	// Authorization: ADMIN
+	@Mutation(() => String)
+	public async getAllMembersByAdmin(): Promise<string> {
+		return this.memberService.getAllMembersByAdmin();
+	}
+
+	// Authorization: ADMIN
+	@Mutation(() => String)
+	public async updateMemberByAdmin(): Promise<string> {
+		console.log('Mutation: updateMemberByAdmin');
+		return this.memberService.updateMemberByAdmin();
 	}
 }

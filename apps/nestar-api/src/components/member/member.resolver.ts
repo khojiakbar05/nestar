@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { MemberService } from './member.service';
-import { InternalServerErrorException, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
 import { Member } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -9,6 +9,7 @@ import * as mongoose from 'mongoose';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
 
 @Resolver()
 export class MemberResolver {
@@ -27,16 +28,6 @@ export class MemberResolver {
 		return await this.memberService.login(input);
 	}
 
-	// Authenticatedn
-	@UseGuards(AuthGuard)
-	@Mutation(() => String)
-	public async updateMember(@AuthMember('_id') memberId: mongoose.ObjectId): Promise<string> {
-		console.log('Mutation: updateMember');
-		// console.log('authMember: ',typeof memberId);
-		console.log(memberId);
-		return this.memberService.updateMember();
-	}
-
 	@UseGuards(AuthGuard)
 	@Mutation(() => String)
 	public async checkAuth(@AuthMember('memberNick') memberNick: string): Promise<string> {
@@ -46,22 +37,36 @@ export class MemberResolver {
 		return `Hi ${memberNick}`;
 	}
 
-	@Query(() => String)
-	public async getMember(): Promise<string> {
-		console.log('Mutation: getMember');
-		return this.memberService.getMember();
-	}
-
 	// Authorization: USER
 	@Roles(MemberType.USER, MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Query(() => String)
 	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
-		console.log('Query: checkAuthRoles', );
+		console.log('Query: checkAuthRoles');
 
 		return `hi ${authMember.memberNick}, you are ${authMember.memberType} (memberId: ${authMember._id})`;
 	}
 
+	// Authenticated
+	@UseGuards(AuthGuard)
+	@Mutation(() => Member)
+	public async updateMember(
+		@Args('input') input: MemberUpdate,
+		@AuthMember('_id') memberId: mongoose.ObjectId,
+	): Promise<Member> {
+		console.log('=== UPDATE MEMBER RESOLVER ===');
+		console.log('INPUT:', input);
+		console.log('Mutation: updateMember');
+		console.log('memberId: ', memberId);
+		delete input._id;
+		return this.memberService.updateMember(memberId, input);
+	}
+
+	@Query(() => String)
+	public async getMember(): Promise<string> {
+		console.log('Mutation: getMember');
+		return this.memberService.getMember();
+	}
 
 	/** ADMIN **/
 

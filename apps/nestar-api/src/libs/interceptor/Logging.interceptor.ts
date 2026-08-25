@@ -1,6 +1,5 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
-import { log } from 'console';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 

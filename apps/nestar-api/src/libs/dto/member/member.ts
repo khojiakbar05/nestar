@@ -4,13 +4,16 @@ import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enu
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Member {
+	// memberNick(arg0: string, memberNick: any) {
+	// 	throw new Error('Method not implemented.');
+	// }
 	@Field(() => String)
 	_id!: mongoose.ObjectId;
 
 	@Field(() => MemberType)
 	memberType!: MemberType;
 
-	@Field(() => MemberStatus)
+	@Field(() => MemberStatus)    
 	memberStatus!: MemberStatus;
 
 	@Field(() => MemberAuthType)
@@ -23,6 +26,9 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	memberFullName?: string;
+
+	@Field(() => String)
+	memberNick!: string;
 
 	@Field(() => String)
 	memberImage!: string;

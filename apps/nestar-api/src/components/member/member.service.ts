@@ -1,23 +1,16 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-<<<<<<< HEAD
-import { Model } from 'mongoose';
-=======
 import { Model, Types } from 'mongoose';
->>>>>>> 9cd7b3f (fix: modify view module to record visits)
 import { Member } from '../../libs/dto/member/member';
 import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
 import { MemberStatus } from '../../libs/enums/member.enum';
 import { Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
-<<<<<<< HEAD
-=======
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewInput } from '../../libs/dto/view/view.input';
->>>>>>> 9cd7b3f (fix: modify view module to record visits)
 
 @Injectable()
 export class MemberService {
@@ -29,13 +22,12 @@ export class MemberService {
 
 	public async signup(input: MemberInput): Promise<Member> {
 		// TODO Hash password
-		input.memberPassword = await this.authService.hashPassword(input.memberPassword)
+		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		try {
 			const result = await this.memberModel.create(input);
 			// TODO Authentication via TOKEN
 			result.accessToken = await this.authService.createToken(result);
 			// console.log('accessToken: ', accessToken);
-			
 
 			return result;
 		} catch (err: any) {
@@ -67,16 +59,6 @@ export class MemberService {
 		return response;
 	}
 
-<<<<<<< HEAD
-	public async updateMember(): Promise<string> {
-		console.log('Mutation: updateMember');
-		return 'updateMember executed!';
-	}
-
-	public async getMember(): Promise<string> {
-		console.log('Mutation: getMember');
-		return 'getMember executed!';
-=======
 	public async updateMember(memberId: Types.ObjectId, input: MemberUpdate): Promise<Member> {
 		const result = await this.memberModel
 			.findOneAndUpdate(
@@ -129,6 +111,5 @@ export class MemberService {
 	public async updateMemberByAdmin(): Promise<string> {
 		console.log('Mutation: updateMemberByAdmin');
 		return 'updateMemberByAdmin executed!';
->>>>>>> 9cd7b3f (fix: modify view module to record visits)
 	}
 }

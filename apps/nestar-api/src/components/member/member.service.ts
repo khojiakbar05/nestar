@@ -80,10 +80,10 @@ export class MemberService {
 		const search: T = {
 			_id: targetId,
 			memberStatus: {
-				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK],
+				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK], // $in = include only contain these status
 			},
 		};
-		const targetMember = await this.memberModel.findOne(search).lean().exec();
+		const targetMember = await this.memberModel.findOne(search).lean().exec(); // .lean() it makes data to object type
 		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {

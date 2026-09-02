@@ -1,5 +1,5 @@
-import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { ObjectId, Types } from 'mongoose';
+import { Field, ObjectType } from '@nestjs/graphql';
+import { Types } from 'mongoose';
 import { CommentGroup, CommentStatus } from '../../enums/comment.enum';
 import { Member, TotalCounter } from '../member/member';
 

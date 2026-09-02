@@ -9,6 +9,7 @@ import { Message } from '../../libs/enums/common.enum';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
 
 @Injectable()
 export class BoardArticleService {
@@ -82,6 +83,29 @@ public async getBoardArticle(
   return targetBoardArticle;
 }
 
+public async updateBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleUpdate): Promise<BoardArticle> {
+    const { _id, articleStatus } = input;
+
+    const result = await this.boardArticleModel
+        .findOneAndUpdate(
+            { _id, memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE },
+            input,
+            { new: true },
+        )
+        .exec();
+
+        if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+        if (articleStatus === BoardArticleStatus.DELETE) {
+            await this.memberService.memberStatsEditor({
+                _id: memberId,
+                targetKey: 'memberBoardArticles',
+                modifier: -1,
+            });
+        }
+
+        return result;
+    }
 
 
 

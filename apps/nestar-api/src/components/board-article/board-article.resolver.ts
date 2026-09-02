@@ -35,16 +35,16 @@ export class BoardArticleResolver {
         return await this.boardArticleService.getBoardArticle(memberId, articleId);
     }
 
-    // @UseGuards(AuthGuard)
-    // @Mutation((returns) => BoardArticle)
-    // public async updateBoardArticle(
-    //     @Args('input') input: BoardArticleUpdate,
-    //     @AuthMember('_id') memberId: mongoose.Types.ObjectId,
-    // ): Promise<BoardArticle> { 
-    //     console.log("Mutation: updateBoardArticle");
-    //     input._id = shapeIntoMongoObjectId(input._id);
-    //     return await this.boardArticleService.updateBoardArticle(memberId, input);
-    // }
+    @UseGuards(AuthGuard)
+    @Mutation((returns) => BoardArticle)
+    public async updateBoardArticle(
+        @Args('input') input: BoardArticleUpdate,
+        @AuthMember('_id') memberId: mongoose.Types.ObjectId,
+    ): Promise<BoardArticle> { 
+        console.log("Mutation: updateBoardArticle");
+        input._id = shapeIntoMongoObjectId(input._id);
+        return await this.boardArticleService.updateBoardArticle(memberId, input);
+    }
 
 
 

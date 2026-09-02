@@ -1,16 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Property } from '../../libs/dto/property/property';
 import { PropertyInput } from '../../libs/dto/property/property.input';
 import { Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
+import { StatisticModifier, T } from '../../libs/types/common';
+import { PropertyStatus } from '../../libs/enums/property.enum';
+import { ViewGroup } from '../../libs/enums/view.enum';
+import { ViewService } from '../view/view.service';
+import { ViewInput } from '../../libs/dto/view/view.input';
 
 @Injectable()
 export class PropertyService {
 	constructor(
 		@InjectModel('Property') private readonly PropertyModel: Model<Property>,
 		private memberService: MemberService,
+		private viewService: ViewService,
 	) {}
 
 	public async createProperty(input: PropertyInput): Promise<Property> {
@@ -25,4 +31,95 @@ export class PropertyService {
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
+
+	public async getProperty(memberId: Types.ObjectId, propertyId: Types.ObjectId): Promise<Property> {
+		const search: T = {
+				_id: propertyId,
+				propertyStatus: PropertyStatus.ACTIVE,
+		};
+
+		const targetProperty = await this.PropertyModel.findOne(search).lean<Property>().exec();
+		if (!targetProperty) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		if (memberId) {
+			const viewInput: ViewInput = { memberId: memberId, viewRefId: propertyId, viewGroup: ViewGroup.PROPERTY };
+			const newView = await this.viewService.recordView(viewInput);
+			if (newView) {
+				await this.propertyStatsEditor({ _id: propertyId, targetKey: 'propertyViews', modifier: 1 });
+				targetProperty.propertyViews++;
+			}
+
+			//meLiked
+		}
+
+		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
+		return targetProperty; 
+	}
+
+	public async propertyStatsEditor(input: StatisticModifier): Promise<Property | null> {
+		const { _id, targetKey, modifier } = input;
+		return await this.PropertyModel
+			.findOneAndUpdate({ _id }, { $inc: { [targetKey]: modifier } }, { new: true })
+			.exec();
+	} 
+
+	// public async getProperty(memberId: mongoose.ObjectId, propertyId: ObjectId PropertiesInquiry): Promise<Properties> {
+	// 	const match: T = {propertyStatus: PropertyStatus.ACTIVE};
+	// 	const sort: T = {[input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC};
+
+	// 	this.shapeMatchQuery(match, input);
+	// 	console.log('match: ', match);
+
+	// 	const result = await this.PropertyModel
+	// 	.aggregate([
+	// 		{$match: match},
+	// 		{$sort: sort},
+	// 		{
+	// 			$facet: {
+	// 				list: [
+	// 					{$skip: (input.page -1) * input.limit},
+	// 				    {$limit: input.limit},
+	// 					// meLiked
+	// 					lookupMember,
+	// 					{ $unwind: "$memberData" },
+	// 				],
+	// 			},
+	// 		},
+	// 	])
+	// 	.exec();
+	// 	if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+	// 	return result[0]
+	// }
+
+	// private shapeMatchQuery(match: T, input: PropertiesInquiry): void {
+	// 	const {
+	// 		memberId,
+	// 		locationList,
+	// 		roomsList,
+	// 		bedsList,
+	// 		typeList,
+	// 		periodsRange,
+	// 		pricesRange,
+	// 		squaresRange,
+	// 		options,
+	// 		text,
+	// 	} = input.search;
+	// 	if (memberId) match.memberId = new mongoose.Types.ObjectId(memberId.toString());
+	// 	if (locationList) match.propertyLocation = {$in: locationList};
+	// 	if (roomsList) match.propertyRooms = {$in: roomsList};
+	// 	if (bedsList) match.propertyBeds = {$in: bedsList};
+	// 	if (typeList) match.propertyType = {$in: typeList};
+
+	// 	if (pricesRange) match.propertyPrice = {$gte: pricesRange.start, $lte: pricesRange.end};
+	// 	if (periodsRange) match.createdAt = {$gte: periodsRange.start, $lte: periodsRange.end};
+	// 	if (squaresRange) match.propertySquare = {$gte: squaresRange.start, $lte: squaresRange.end};
+
+	// 	if (text) match.propertyTitle = { $regex: new RegExp(text, 'i') };
+	// 	if (options) {
+	// 		match['$or'] = options.map((ele) => {
+	// 			return { [ele]: true };
+	// 		})
+	// 	};
+	// }
 }

@@ -1,11 +1,11 @@
-import { ObjectId } from "mongoose";
+import { Types } from "mongoose";
 
 export interface T {
      [key: string]: any
 }
 
 export interface StatisticModifier {
-     _id: ObjectId;
+     _id: Types.ObjectId;
      targetKey: string;
      modifier: number;
 }

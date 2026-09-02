@@ -1,11 +1,13 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import * as mongoose from 'mongoose';
 import { PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
+import { Member, TotalCounter } from '../member/member';
+import { Types } from 'mongoose';
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Property {
 	@Field(() => String)
-	_id!: mongoose.ObjectId;
+	_id!: Types.ObjectId;
 
 	@Field(() => PropertyType)
 	propertyType!: PropertyType;
@@ -59,7 +61,7 @@ export class Property {
 	propertyRent!: boolean;
 
 	@Field(() => String)
-	memberId!: mongoose.ObjectId;
+	memberId!: Types.ObjectId;
 
 	@Field(() => Date, { nullable: true })
 	soldAt?: Date;
@@ -75,4 +77,17 @@ export class Property {
 
 	@Field(() => Date)
 	updatedAt!: Date;
+
+	/** from aggregation **/
+	@Field(() => Member, { nullable: true })
+	memberData?: Member;
+}
+
+@ObjectType()
+export class Properties {
+	@Field(() => [Property])
+	list!: Property[];
+
+	@Field(() => [TotalCounter], { nullable: true })
+	metaCounter!: TotalCounter[];
 }

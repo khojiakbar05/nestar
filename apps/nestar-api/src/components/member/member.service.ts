@@ -10,6 +10,7 @@ import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewGroup } from '../../libs/enums/view.enum';
+import { ViewInput } from '../../libs/dto/view/view.input';
 
 @Injectable()
 export class MemberService {
@@ -75,7 +76,7 @@ export class MemberService {
 		return result;
 	}
 
-	public async getMember(memberId: Types.ObjectId, targetId: Types.ObjectId): Promise<Member> {
+	public async getMember(memberId: Types.ObjectId | null, targetId: Types.ObjectId): Promise<Member> {
 		console.log('queryService: getMember');
 		const search: T = {
 			_id: targetId,
@@ -88,7 +89,7 @@ export class MemberService {
 
 		if (memberId) {
 			// record view
-			const viewInput = { memberId: memberId, viewRefId: targetId, viewGroup: ViewGroup.MEMBER };
+			const viewInput: ViewInput = { memberId: memberId, viewRefId: targetId, viewGroup: ViewGroup.MEMBER };
 			const newView = await this.viewService.recordView(viewInput);
 			if (newView) {
 				// increase member view
@@ -103,7 +104,7 @@ export class MemberService {
 		return targetMember;
 	}
 
-	public async getAgents(memberId: mongoose.Types.ObjectId, input: AgentsInquiry): Promise<Members> {
+	public async getAgents(memberId: Types.ObjectId, input: AgentsInquiry): Promise<Members> {
 		const { text } = input.search;
 		const match: T = { memberType: MemberType.AGENT, memberStatus: MemberStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };

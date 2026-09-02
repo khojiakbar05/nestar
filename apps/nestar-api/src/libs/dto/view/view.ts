@@ -5,16 +5,16 @@ import { ViewGroup } from '../../enums/view.enum';
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class View {
 	@Field(() => String)
-	_id!: mongoose.ObjectId;
+	_id!: mongoose.Types.ObjectId;
 
 	@Field(() => ViewGroup)
 	viewGroup!: ViewGroup;
 
 	@Field(() => String)
-	viewRefId!: mongoose.ObjectId;
+	viewRefId!: mongoose.Types.ObjectId;
 
 	@Field(() => String)
-	memberId!: mongoose.ObjectId;
+	memberId!: mongoose.Types.ObjectId;
 
 	@Field(() => Date)
 	createdAt!: Date;

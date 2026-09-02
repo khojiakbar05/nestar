@@ -1,11 +1,13 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
-import mongoose, { ObjectId } from 'mongoose';
+import  { Types } from 'mongoose';
 import { BoardArticleCategory, BoardArticleStatus } from '../../enums/board-article.enum';
 import { Direction } from '../../enums/common.enum';
 
 @InputType()
 export class BoardArticleInput {
+	// allow arbitrary keys without forcing them to be ObjectId
+	[x: string]: any;
 	@IsNotEmpty()
 	@Field(() => BoardArticleCategory)
 	articleCategory!: BoardArticleCategory;
@@ -24,7 +26,8 @@ export class BoardArticleInput {
 	@Field(() => String, { nullable: true })
 	articleImage?: string;
 
-	memberId?: ObjectId;
+	memberId?: Types.ObjectId;
+    input!: Types.ObjectId;
 }
 
 @InputType()
@@ -39,7 +42,7 @@ class BAISearch {
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })
-	memberId?: mongoose.ObjectId;
+	memberId?: Types.ObjectId;
 }
 
 @InputType()

@@ -205,7 +205,15 @@ public async updateBoardArticleByAdmin(input: BoardArticleUpdate): Promise<Board
     return result;
 }
 
+public async removeBoardArticleByAdmin(articleId: mongoose.Types.ObjectId): Promise<BoardArticle> {
+    const search: T = { _id: articleId, articleStatus: BoardArticleStatus.DELETE }; 
+    const result = await this.boardArticleModel
+        .findOneAndUpdate(search).exec();
 
+    if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+    return result;
+}
 
 
 

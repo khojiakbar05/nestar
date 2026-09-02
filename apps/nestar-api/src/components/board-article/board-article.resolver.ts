@@ -85,6 +85,19 @@ export class BoardArticleResolver {
     }
 
 
+    @Roles(MemberType.ADMIN)
+    @UseGuards(RolesGuard)
+    @Mutation((returns) => BoardArticle)
+    public async removeBoardArticleByAdmin(
+        @Args('input') input: string,
+        @AuthMember('_id') memberId: mongoose.Types.ObjectId,
+    ): Promise<BoardArticle> { 
+        console.log("Mutation: removeBoardArticleByAdmin");
+        const articleId = new mongoose.Types.ObjectId(input);
+        return await this.boardArticleService.removeBoardArticleByAdmin(articleId);
+    }
+
+
 
 
 }

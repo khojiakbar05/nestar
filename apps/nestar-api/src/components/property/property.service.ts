@@ -13,6 +13,7 @@ import { ViewInput } from '../../libs/dto/view/view.input';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment from 'moment';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { exec } from 'child_process';
 
 @Injectable()
 export class PropertyService {
@@ -222,4 +223,43 @@ export class PropertyService {
 		return result[0];
 	}
 
-} 
+	public async updatePropertyByAdmin(input: PropertyUpdate): Promise<Property> {
+		let { propertyStatus, soldAt, deletedAt } = input;
+		const search: T = { 
+			_id: input._id,
+			propertyStatus: PropertyStatus.ACTIVE, 
+		};
+
+		if (propertyStatus === PropertyStatus.SOLD) soldAt = moment().toDate();
+		else if (propertyStatus === PropertyStatus.DELETE) deletedAt = moment().toDate();
+
+		const result = await this.PropertyModel
+		.findOneAndUpdate(search, input, { 
+			new: true
+		})
+ 		.exec();
+
+		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+		if (soldAt || deletedAt) {
+			await this.memberService.memberStatsEditor({ 
+				_id: result.memberId, 
+				targetKey: 'memberProperties', 
+				modifier: -1 
+			});
+		}
+
+		return result;
+	}
+
+	// public async removePropertyByAdmin(propertyId: Types.ObjectId): Promise<Property> {
+	// 	const search: T = { _id: propertyId, propertyStatus: PropertyStatus.DELETE };
+	// 	const result = await this.PropertyModel.findOneAndUpdate(search).exec();
+	// 	if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
+
+	// 	return result;
+	// }
+
+
+
+}

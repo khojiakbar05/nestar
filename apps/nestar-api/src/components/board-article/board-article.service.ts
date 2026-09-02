@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import mongoose, { Model, Types } from 'mongoose';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { BoardArticle } from '../../libs/dto/board-article/board-article';
 import { ViewService } from '../view/view.service';
 import { MemberService } from '../member/member.service';
 import { BoardArticleInput } from '../../libs/dto/board-article/board-article.input';
 import { Message } from '../../libs/enums/common.enum';
+import { StatisticModifier, T } from '../../libs/types/common';
+import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
+import { ViewGroup } from '../../libs/enums/view.enum';
 
 @Injectable()
 export class BoardArticleService {
@@ -31,6 +34,71 @@ public async createBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardA
     }
 }
 
+public async getBoardArticle(
+  memberId: mongoose.Types.ObjectId | null,
+  articleId: mongoose.Types.ObjectId,
+): Promise<BoardArticle> {
+  const search: T = {
+    _id: articleId,
+    articleStatus: BoardArticleStatus.ACTIVE,
+  };
+
+  const targetBoardArticle = await this.boardArticleModel
+    .findOne(search)
+    .lean<BoardArticle>()
+    .exec();
+
+  if (!targetBoardArticle) {
+    throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+  }
+
+  if (memberId) {
+    const viewInput = {
+      memberId,
+      viewRefId: articleId,
+      viewGroup: ViewGroup.ARTICLE,
+    };
+
+    const newView = await this.viewService.recordView(viewInput);
+
+    if (newView) {
+      await this.boardArticleStatsEditor({
+        _id: articleId,
+        targetKey: 'articleViews',
+        modifier: 1,
+      });
+
+      targetBoardArticle.articleViews++;
+    }
+
+    // meLiked
+  }
+
+  targetBoardArticle.memberData = await this.memberService.getMember(
+    null,
+    targetBoardArticle.memberId,
+  );
+
+  return targetBoardArticle;
+}
 
 
+
+
+
+
+
+    public async boardArticleStatsEditor(input: StatisticModifier): Promise<BoardArticle | null> {
+        const { _id, targetKey, modifier } = input;
+        return await this.boardArticleModel
+            .findOneAndUpdate(
+                _id, 
+                { $inc: { [targetKey]: modifier } }, 
+                { 
+                    new: true 
+                })
+            .exec();
+    }
+
+    
 }

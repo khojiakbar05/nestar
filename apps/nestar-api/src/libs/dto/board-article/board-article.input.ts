@@ -27,7 +27,7 @@ export class BoardArticleInput {
 	articleImage?: string;
 
 	memberId?: Types.ObjectId;
-    input!: Types.ObjectId;
+    articleId?: Types.ObjectId;
 }
 
 @InputType()

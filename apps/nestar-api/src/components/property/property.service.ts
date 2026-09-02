@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, Types } from 'mongoose';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentsPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
 import { StatisticModifier, T } from '../../libs/types/common';
@@ -80,7 +80,7 @@ export class PropertyService {
 		const result = await this.PropertyModel
 		.findOneAndUpdate(search, input, {
 			new: true,
-		})
+		})  
 		.exec();
 		if(!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
@@ -156,4 +156,38 @@ export class PropertyService {
 			})
 		};
 	}
-}
+
+	public async getAgentsProperties(memberId: Types.ObjectId, input: AgentsPropertiesInquiry): Promise<Properties> {
+		const { propertyStatus } = input.search;
+		if ( propertyStatus === PropertyStatus.DELETE) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
+
+		const match: T = { 
+			memberId: memberId, 
+			propertyStatus: propertyStatus ?? { $ne: PropertyStatus.DELETE }, 
+		};
+		const sort: T = {[input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC};
+
+		const result = await this.PropertyModel
+		.aggregate([
+			{$match: match},
+			{$sort: sort},
+			{
+				$facet: {
+					list: [
+						{$skip: (input.page -1) * input.limit},
+					    {$limit: input.limit},
+
+						lookupMember,
+						{ $unwind: "$memberData" },
+					],
+					metaCounter: [{$count: 'total'}],
+				},
+			},
+		])
+		.exec();
+		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		return result[0];
+	}
+
+} 

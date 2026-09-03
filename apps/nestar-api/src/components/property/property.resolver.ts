@@ -12,6 +12,7 @@ import { WithoutGuard } from '../auth/guards/without.guard';
 import { Query } from '@nestjs/graphql';
 import { shapeIntoMongoObjectId } from '../../../src/libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 
 @Resolver()
@@ -78,6 +79,21 @@ export class PropertyResolver {
 	 }
 
  
+
+	/** LIKE **/
+	
+	@UseGuards(AuthGuard)
+	@Mutation(() => Property)
+	public async likeTargetProperty(
+		@Args('propertyId') input: string,
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId,
+	): Promise<Property> {
+		console.log("Mutation: likeTargetMember");
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.propertyService.likeTargetProperty(memberId, likeRefId);
+	}
+
+
 
 	 /** ADMIN **/
 

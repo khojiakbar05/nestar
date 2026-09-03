@@ -10,7 +10,7 @@ import { PropertyLocation, PropertyStatus, PropertyType } from "../../enums/prop
 export class PropertyUpdate {
     @IsNotEmpty()
     @Field(() => String)
-    _id!: mongoose.ObjectId;
+    _id!: mongoose.Types.ObjectId;
 
     @IsOptional()
     @Field(() => PropertyType, { nullable: true })

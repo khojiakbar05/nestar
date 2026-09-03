@@ -24,7 +24,7 @@ export class PropertyResolver {
 	@Mutation(() => Property)
 	public async createProperty(
 		@Args('input') input: PropertyInput,
-		@AuthMember('_id') memberId: mongoose.ObjectId,
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId,
 	): Promise<Property> {
 		console.log("Mutation: createProperty");
           input.memberId = memberId // frontenddan kelgan memberId ni emas databasedagi memberId ga tenglayapmiz
@@ -37,7 +37,7 @@ export class PropertyResolver {
 	 @Query((returns) => Property)
 	 public async getProperty(
 		@Args('propertyId') input: string,
-		@AuthMember('_id') memberId: mongoose.ObjectId,
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId,
 	 ): Promise<Property> {
 		console.log("Query: getProperty");
 		const propertyId = shapeIntoMongoObjectId(input); 
@@ -49,7 +49,7 @@ export class PropertyResolver {
 	 @Mutation((returns) => Property)
 	 public async updateProperty(
 		@Args('input') input: PropertyUpdate,
-		@AuthMember('_id') memberId: mongoose.ObjectId, 
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId, 
 	 ): Promise<Property> {
 		console.log("Mutation: updateProperty");
 		input._id = shapeIntoMongoObjectId(input._id);
@@ -61,7 +61,7 @@ export class PropertyResolver {
 	 @Query((returns) => Properties)
 	 public async getProperties(
 		@Args('input') input: PropertiesInquiry,
-		@AuthMember('_id') memberId: mongoose.ObjectId,    
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId,    
 	 ): Promise<Properties> {
 		console.log("Query: getProperties");
 		return await this.propertyService.getProperties(memberId as unknown as mongoose.Types.ObjectId, input);
@@ -72,7 +72,7 @@ export class PropertyResolver {
 	 @Query((returns) => Properties)
 	 public async getAgentsProperies(
 		@Args('input') input: AgentsPropertiesInquiry,
-		@AuthMember('_id') memberId: mongoose.ObjectId, 
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId, 
 	 ): Promise<Properties> {		
 		console.log("Query: getAgentsProperies");
 		return await this.propertyService.getAgentsProperties(memberId as unknown as mongoose.Types.ObjectId, input);
@@ -102,7 +102,7 @@ export class PropertyResolver {
 	 @Query((returns) => Properties)
 	 public async getAllPropertiesByAdmin(
 		@Args('input') input: AllPropertiesInquiry,
-		@AuthMember('_id') memberId: mongoose.ObjectId, 
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId, 
 	 ): Promise<Properties> {		
 		console.log("Query: getAllPropertiesByAdmin");
 		return await this.propertyService.getAllPropertiesByAdmin(input);

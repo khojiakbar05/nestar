@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
@@ -14,11 +14,13 @@ import { ViewInput } from '../../libs/dto/view/view.input';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
 
 @Injectable()
 export class MemberService {
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
 		private authService: AuthService,
 		private viewService: ViewService,
 		private likeService: LikeService,
@@ -106,9 +108,16 @@ export class MemberService {
 			targetMember.meLiked = await this.likeService.checkLikeExistance(likeInput);
 
 			// meFollowed
+			targetMember.meFollowed = await this.checkSubscription(memberId, targetId);
+			// member = followerId     // targetId = followingId
 		}
 
 		return targetMember;
+	}
+
+	private async checkSubscription(followerId: Types.ObjectId, followingId: Types.ObjectId): Promise<MeFollowed[]> {
+		const result = await this.followModel.findOne({followingId: followingId, followerId: followerId}).exec();
+		return result ? [{followerId: followerId, followingId: followingId, myFollowing: true}] : [];
 	}
 
 	public async getAgents(memberId: Types.ObjectId, input: AgentsInquiry): Promise<Members> {

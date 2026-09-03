@@ -7,7 +7,7 @@ import * as mongoose from 'mongoose';
 export class MemberUpdate {
 	@IsOptional()
 	@Field(() => String, { nullable: true })
-	_id?: mongoose.ObjectId;
+	_id?: mongoose.Types.ObjectId;
 
 	@IsOptional()
 	@Field(() => MemberType, { nullable: true })

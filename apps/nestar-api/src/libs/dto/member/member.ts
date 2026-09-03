@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import * as mongoose from 'mongoose';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
 import { MeLiked } from '../like/like';
+import { MeFollowed } from '../follow/follow';
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Member {
@@ -9,7 +10,7 @@ export class Member {
 	// 	throw new Error('Method not implemented.');
 	// }
 	@Field(() => String)
-	_id!: mongoose.ObjectId;
+	_id!: mongoose.Types.ObjectId;
 
 	@Field(() => MemberType)
 	memberType!: MemberType;
@@ -89,6 +90,9 @@ export class Member {
 
 	@Field(() => [MeLiked], {nullable: true})
 	meLiked?: MeLiked[];
+
+	@Field(() => [MeFollowed], {nullable: true})
+	meFollowed?: MeFollowed[];
 }
 
 

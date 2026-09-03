@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
 import { ViewService } from '../view/view.service';
@@ -11,12 +11,16 @@ import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { LikeService } from '../like/like.service';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeInput } from '../../libs/dto/like/like.input';
 
 @Injectable()
 export class BoardArticleService {
     constructor(@InjectModel('BoardArticle') private readonly boardArticleModel: Model<BoardArticle>,
     private readonly memberService: MemberService,
-    private readonly viewService: ViewService
+    private readonly viewService: ViewService,
+    private readonly likeService: LikeService
 ) {}
 
 public async createBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
@@ -146,6 +150,35 @@ public async updateBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardA
         return result[0];
     }   
    
+
+    /** LIKE **/
+        
+            public async likeTargetBoardArticle(memberId: Types.ObjectId, likeRefId: Types.ObjectId): Promise<BoardArticle> {
+                const target = await this.boardArticleModel.findOne({ 
+                    _id: likeRefId,  
+                    articleStatus: BoardArticleStatus.ACTIVE 
+                })
+                .exec();
+                if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+        
+                const input: LikeInput = {   
+                    memberId: memberId,
+                    likeRefId: likeRefId,
+                    likeGroup: LikeGroup.ARTICLE,
+                };
+        
+                // LIKE TOGGLE -1, +1  -> like bosganda 1taga kopayadi yana qayta bossa -1 ga kamayadi
+                // LIKE via service module 
+                const modifier: number = await this.likeService.toggleLike(input) ?? 1;
+                const result = await this.boardArticleStatsEditor({
+                    _id: likeRefId,
+                    targetKey: 'propertyLikes',
+                    modifier: modifier,
+                })
+        
+                if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+                return result;
+            }
 
     /** ADMIN **/
     public async getAllBoardArticlesByAdmin(input: AllBoardArticlesInquiry): Promise<BoardArticles> {

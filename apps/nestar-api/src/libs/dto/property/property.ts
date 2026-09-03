@@ -3,6 +3,7 @@ import * as mongoose from 'mongoose';
 import { PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
 import { Member, TotalCounter } from '../member/member';
 import { Types } from 'mongoose';
+import { MeLiked } from '../like/like';
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Property {
@@ -81,6 +82,10 @@ export class Property {
 	/** from aggregation **/
 	@Field(() => Member, { nullable: true })
 	memberData?: Member;
+
+
+	@Field(() => [MeLiked], {nullable: true})
+	meLiked?: MeLiked[];
 }
 
 @ObjectType()

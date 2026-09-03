@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import * as mongoose from 'mongoose';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
+import { MeLiked } from '../like/like';
 
 @ObjectType() // backendan clientga datalani typeni yuborishda yordam beradi
 export class Member {
@@ -83,6 +84,11 @@ export class Member {
 
 	@Field(() => String, {nullable: true})
 	accessToken?: string;
+
+	/** from aggregation **/
+
+	@Field(() => [MeLiked], {nullable: true})
+	meLiked?: MeLiked[];
 }
 
 

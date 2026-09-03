@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { AgentsPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { Properties, Property } from '../../libs/dto/property/property';
 import { StatisticModifier, T } from '../../libs/types/common';

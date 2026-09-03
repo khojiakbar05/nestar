@@ -1,16 +1,16 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import mongoose, { Model, Types } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
-import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
-import { ViewService } from '../view/view.service';
-import { MemberService } from '../member/member.service';
 import { AllBoardArticlesInquiry, BoardArticleInput, BoardArticlesInquiry } from '../../libs/dto/board-article/board-article.input';
-import { Direction, Message } from '../../libs/enums/common.enum';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
+import mongoose, { Model, Types } from 'mongoose';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
-import { ViewGroup } from '../../libs/enums/view.enum';
 import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { Direction, Message } from '../../libs/enums/common.enum';
+import { MemberService } from '../member/member.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { ViewService } from '../view/view.service';
+import { ViewGroup } from '../../libs/enums/view.enum';
 import { LikeService } from '../like/like.service';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeInput } from '../../libs/dto/like/like.input';
@@ -23,99 +23,99 @@ export class BoardArticleService {
     private readonly likeService: LikeService
 ) {}
 
-public async createBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
-    input.memberId = memberId;
-    try {
-        const result = await this.boardArticleModel.create(input);
-        await this.memberService.memberStatsEditor({ 
-            _id: memberId, 
-            targetKey: 'memberBoardArticles', 
-            modifier: 1 
-        });
+    public async createBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
+        input.memberId = memberId;
+        try {
+            const result = await this.boardArticleModel.create(input);
+            await this.memberService.memberStatsEditor({ 
+                _id: memberId, 
+                targetKey: 'memberBoardArticles', 
+                modifier: 1 
+            });
 
-        return result;
-    } catch (err: any) {
-        console.log('Error, Service.model:', err?.message ?? err);
-        throw new BadRequestException(Message.CREATE_FAILED);
+            return result;
+        } catch (err: any) {
+            console.log('Error, Service.model:', err?.message ?? err);
+            throw new BadRequestException(Message.CREATE_FAILED);
+        }
     }
-}
 
-public async getBoardArticle(
-  memberId: mongoose.Types.ObjectId | null,
-  articleId: mongoose.Types.ObjectId,
-): Promise<BoardArticle> {
-  const search: T = {
-    _id: articleId,
-    articleStatus: BoardArticleStatus.ACTIVE,
-  };
-
-  const targetBoardArticle = await this.boardArticleModel
-    .findOne(search)
-    .lean<BoardArticle>()
-    .exec();
-
-  if (!targetBoardArticle) {
-    throw new InternalServerErrorException(Message.NO_DATA_FOUND);
-  }
-
-  if (memberId) {
-    const viewInput = {
-      memberId,
-      viewRefId: articleId,
-      viewGroup: ViewGroup.ARTICLE,
+    public async getBoardArticle(
+    memberId: mongoose.Types.ObjectId | null,
+    articleId: mongoose.Types.ObjectId,
+    ): Promise<BoardArticle> {
+    const search: T = {
+        _id: articleId,
+        articleStatus: BoardArticleStatus.ACTIVE,
     };
 
-    const newView = await this.viewService.recordView(viewInput);
-
-    if (newView) {
-      await this.boardArticleStatsEditor({
-        _id: articleId,
-        targetKey: 'articleViews',
-        modifier: 1,
-      });
-
-      targetBoardArticle.articleViews++;
-    }
-
-    // meLiked
-			const likeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.ARTICLE };
-			targetBoardArticle.meLiked = await this.likeService.checkLikeExistance(likeInput);
-  }
-  
-  targetBoardArticle.memberData = await this.memberService.getMember(
-    null,
-    targetBoardArticle.memberId,
-  );
-
-  return targetBoardArticle;
-}
-
-public async updateBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleUpdate): Promise<BoardArticle> {
-    const { _id, articleStatus } = input;
-
-    const result = await this.boardArticleModel
-        .findOneAndUpdate(
-            { _id, memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE },
-            input,
-            { new: true },
-        )
+    const targetBoardArticle = await this.boardArticleModel
+        .findOne(search)
+        .lean<BoardArticle>()
         .exec();
 
-        if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+    if (!targetBoardArticle) {
+        throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+    }
 
-        if (articleStatus === BoardArticleStatus.DELETE) {
-            await this.memberService.memberStatsEditor({
-                _id: memberId,
-                targetKey: 'memberBoardArticles',
-                modifier: -1,
-            });
+    if (memberId) {
+        const viewInput = {
+        memberId,
+        viewRefId: articleId,
+        viewGroup: ViewGroup.ARTICLE,
+        };
+
+        const newView = await this.viewService.recordView(viewInput);
+
+        if (newView) {
+        await this.boardArticleStatsEditor({
+            _id: articleId,
+            targetKey: 'articleViews',
+            modifier: 1,
+        });
+
+        targetBoardArticle.articleViews++;
         }
 
-        return result;
+        // meLiked
+                const likeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.ARTICLE };
+                targetBoardArticle.meLiked = await this.likeService.checkLikeExistance(likeInput);
+    }
+
+    targetBoardArticle.memberData = await this.memberService.getMember(
+        null,
+        targetBoardArticle.memberId,
+    );
+
+    return targetBoardArticle;
+    }
+
+    public async updateBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardArticleUpdate): Promise<BoardArticle> {
+        const { _id, articleStatus } = input;
+
+        const result = await this.boardArticleModel
+            .findOneAndUpdate(
+                { _id, memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE },
+                input,
+                { new: true },
+            )
+            .exec();
+
+            if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
+
+            if (articleStatus === BoardArticleStatus.DELETE) {
+                await this.memberService.memberStatsEditor({
+                    _id: memberId,
+                    targetKey: 'memberBoardArticles',
+                    modifier: -1,
+                });
+            }
+
+            return result;
     }
 
 
-    public async getBoardArticles(memberId: mongoose.Types.ObjectId, input: BoardArticlesInquiry): Promise<BoardArticles> {
+public async getBoardArticles(memberId: mongoose.Types.ObjectId, input: BoardArticlesInquiry): Promise<BoardArticles> {
         const { articleCategory, text } = input.search;
         const match: T = { articleStatus: BoardArticleStatus.ACTIVE };
         const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
@@ -150,118 +150,118 @@ public async updateBoardArticle(memberId: mongoose.Types.ObjectId, input: BoardA
         if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
         return result[0];
-    }   
+}   
    
 
     /** LIKE **/
-        
-            public async likeTargetBoardArticle(memberId: Types.ObjectId, likeRefId: Types.ObjectId): Promise<BoardArticle> {
-                const target = await this.boardArticleModel.findOne({ 
-                    _id: likeRefId,  
-                    articleStatus: BoardArticleStatus.ACTIVE 
-                })
-                .exec();
-                if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
-        
-                const input: LikeInput = {   
-                    memberId: memberId,
-                    likeRefId: likeRefId,
-                    likeGroup: LikeGroup.ARTICLE,
-                };
-        
-                // LIKE TOGGLE -1, +1  -> like bosganda 1taga kopayadi yana qayta bossa -1 ga kamayadi
-                // LIKE via service module 
-                const modifier: number = await this.likeService.toggleLike(input) ?? 1;
-                const result = await this.boardArticleStatsEditor({
-                    _id: likeRefId,
-                    targetKey: 'propertyLikes',
-                    modifier: modifier,
-                })
-        
-                if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
-                return result;
-            }
+            
+    public async likeTargetBoardArticle(memberId: Types.ObjectId, likeRefId: Types.ObjectId): Promise<BoardArticle> {
+                    const target = await this.boardArticleModel.findOne({ 
+                        _id: likeRefId,  
+                        articleStatus: BoardArticleStatus.ACTIVE 
+                    })
+                    .exec();
+                    if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+            
+                    const input: LikeInput = {   
+                        memberId: memberId,
+                        likeRefId: likeRefId,
+                        likeGroup: LikeGroup.ARTICLE,
+                    };
+            
+                    // LIKE TOGGLE -1, +1  -> like bosganda 1taga kopayadi yana qayta bossa -1 ga kamayadi
+                    // LIKE via service module 
+                    const modifier: number = await this.likeService.toggleLike(input) ?? 1;
+                    const result = await this.boardArticleStatsEditor({
+                        _id: likeRefId,
+                        targetKey: 'propertyLikes',
+                        modifier: modifier,
+                    })
+            
+                    if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+                    return result;
+    }
 
     /** ADMIN **/
     public async getAllBoardArticlesByAdmin(input: AllBoardArticlesInquiry): Promise<BoardArticles> {
-        const { articleStatus, articleCategory } = input.search;
-        const match: T = {};
-        const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
+            const { articleStatus, articleCategory } = input.search;
+            const match: T = {};
+            const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
 
-        if (articleStatus) match.articleStatus = articleStatus;
-        if (articleCategory) match.articleCategory = articleCategory;
+            if (articleStatus) match.articleStatus = articleStatus;
+            if (articleCategory) match.articleCategory = articleCategory;
+
+            const result = await this.boardArticleModel
+                .aggregate([
+                    { $match: match },
+                    { $sort: sort },
+                    {
+                        $facet: {
+                            list: [
+                                { $skip: (input.page - 1) * input.limit },
+                                { $limit: input.limit },
+
+                                //MeLiked
+                                lookupMember,
+                                {$unwind: '$memberData'},
+                            ],
+                            metaCounter: [{ $count: 'total' }],
+                        },
+                    },
+                ])
+                .exec();
+
+            if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+            return result[0];    
+    }
+
+
+    public async updateBoardArticleByAdmin(input: BoardArticleUpdate): Promise<BoardArticle> {
+        const { _id, articleStatus } = input;
 
         const result = await this.boardArticleModel
-            .aggregate([
-                { $match: match },
-                { $sort: sort },
-                {
-                    $facet: {
-                        list: [
-                            { $skip: (input.page - 1) * input.limit },
-                            { $limit: input.limit },
-
-                            //MeLiked
-                            lookupMember,
-                            {$unwind: '$memberData'},
-                        ],
-                        metaCounter: [{ $count: 'total' }],
-                    },
-                },
-            ])
+            .findOneAndUpdate(
+                { _id: _id, articleStatus: BoardArticleStatus.ACTIVE },
+                input,
+                { new: true },
+            )
             .exec();
+        if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 
-        if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+        if (articleStatus === BoardArticleStatus.DELETE) {
+            await this.memberService.memberStatsEditor({
+                _id: result.memberId,
+                targetKey: 'memberBoardArticles',
+                modifier: -1,
+            });
+        }
 
-        return result[0];    
+        return result;
     }
 
+    public async removeBoardArticleByAdmin(articleId: mongoose.Types.ObjectId): Promise<BoardArticle> {
+        const search: T = { _id: articleId, articleStatus: BoardArticleStatus.DELETE }; 
+        const result = await this.boardArticleModel
+            .findOneAndUpdate(search).exec();
 
-public async updateBoardArticleByAdmin(input: BoardArticleUpdate): Promise<BoardArticle> {
-    const { _id, articleStatus } = input;
+        if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
 
-    const result = await this.boardArticleModel
-        .findOneAndUpdate(
-            { _id: _id, articleStatus: BoardArticleStatus.ACTIVE },
-            input,
-            { new: true },
-        )
-        .exec();
-    if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
-
-    if (articleStatus === BoardArticleStatus.DELETE) {
-        await this.memberService.memberStatsEditor({
-            _id: result.memberId,
-            targetKey: 'memberBoardArticles',
-            modifier: -1,
-        });
+        return result;
     }
-
-    return result;
-}
-
-public async removeBoardArticleByAdmin(articleId: mongoose.Types.ObjectId): Promise<BoardArticle> {
-    const search: T = { _id: articleId, articleStatus: BoardArticleStatus.DELETE }; 
-    const result = await this.boardArticleModel
-        .findOneAndUpdate(search).exec();
-
-    if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
-
-    return result;
-}
 
 
 
     public async boardArticleStatsEditor(input: StatisticModifier): Promise<BoardArticle | null> {
-        const { _id, targetKey, modifier } = input;
-        return await this.boardArticleModel
-            .findOneAndUpdate(
-                _id, 
-                { $inc: { [targetKey]: modifier } }, 
-                { 
-                    new: true 
-                })
-            .exec();
+            const { _id, targetKey, modifier } = input;
+            return await this.boardArticleModel
+                .findOneAndUpdate(
+                    _id, 
+                    { $inc: { [targetKey]: modifier } }, 
+                    { 
+                        new: true 
+                    })
+                .exec();
     }
 
     

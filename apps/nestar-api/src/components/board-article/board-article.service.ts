@@ -1,6 +1,6 @@
 import { AllBoardArticlesInquiry, BoardArticleInput, BoardArticlesInquiry } from '../../libs/dto/board-article/board-article.input';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
 import mongoose, { Model, Types } from 'mongoose';
 import { StatisticModifier, T } from '../../libs/types/common';
@@ -138,6 +138,7 @@ public async getBoardArticles(memberId: mongoose.Types.ObjectId, input: BoardArt
                             { $limit: input.limit },
 
                             //MeLiked
+                            lookupAuthMemberLiked(memberId),
                             lookupMember,
                             {$limit: input.limit},
                         ],

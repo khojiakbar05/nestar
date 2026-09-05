@@ -76,6 +76,16 @@ export class PropertyResolver {
 		console.log("Query: getFavorites");
 		return await this.propertyService.getFavorite(memberId, input);
 	 }
+
+	   @UseGuards(AuthGuard)
+	 @Query((returns) => Properties)
+	 public async getVisited(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: mongoose.Types.ObjectId,    
+	 ): Promise<Properties> {
+		console.log("Query: getVisited");
+		return await this.propertyService.getVisited(memberId, input);
+	 }
 	 
 	 @Roles(MemberType.AGENT)
 	 @UseGuards(RolesGuard)

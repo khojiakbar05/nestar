@@ -1,4 +1,4 @@
-import { AgentsPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentsPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { Properties, Property } from '../../libs/dto/property/property';
@@ -163,6 +163,10 @@ export class PropertyService {
 				return { [ele]: true };
 			})
 		};
+	}
+
+	public async getFavorite(memberId: Types.ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.likeService.getFavoriteProperties(memberId, input);
 	}
 
 	public async getAgentsProperties(memberId: Types.ObjectId, input: AgentsPropertiesInquiry): Promise<Properties> {
